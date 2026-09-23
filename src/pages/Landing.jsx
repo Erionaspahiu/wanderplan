@@ -9,6 +9,7 @@ import {
 import { DESTINATIONS } from "../data/demoData";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import CheapFlightsSection from "../components/flights/CheapFlightsSection";
 import Button from "../components/ui/Button";
 
 export default function Landing() {
@@ -80,7 +81,9 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="section section-muted" id="explore">
+      <CheapFlightsSection />
+
+      <section className="section" id="explore">
         <div className="container">
           <div className="section-header">
             <p className="eyebrow">{t("landing.exploreEyebrow")}</p>

@@ -42,17 +42,21 @@ import ItineraryItem from "../components/itinerary/ItineraryItem";
 import PlaceCard from "../components/places/PlaceCard";
 import WeatherForecast from "../components/trips/WeatherForecast";
 import TransportLinks from "../components/trips/TransportLinks";
+import FlightLinks from "../components/trips/FlightLinks";
+import FlightsTab from "../components/flights/FlightsTab";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import Input from "../components/ui/Input";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Modal, { ConfirmDialog } from "../components/ui/Modal";
+import { formatClock } from "../utils/flightHelpers";
 
-const TABS = ["Overview", "Itinerary", "Places", "Budget"];
+const TABS = ["Overview", "Itinerary", "Places", "Flights", "Budget"];
 const TAB_KEYS = {
   Overview: "trip.tabs.overview",
   Itinerary: "trip.tabs.itinerary",
   Places: "trip.tabs.places",
+  Flights: "trip.tabs.flights",
   Budget: "trip.tabs.budget",
 };
 
@@ -102,6 +106,7 @@ export default function TripDashboard() {
 
   const [confirm, setConfirm] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [savingFlightId, setSavingFlightId] = useState(null);
 
   const loadAll = useCallback(async () => {
     const [tripData, itineraryData, expenseData, savedData] = await Promise.all([
@@ -287,6 +292,41 @@ export default function TripDashboard() {
       showToast(err.message || t("trip.expenseSaveFailed"), "error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveFlight = async (offer) => {
+    setSavingFlightId(offer.id);
+    try {
+      const departDateOnly = offer.departureTime?.slice(0, 10) || trip.start_date;
+      const departTimeOnly = offer.departureTime ? formatClock(offer.departureTime) : "";
+      const route = `${offer.departureAirport} → ${offer.arrivalAirport}`;
+
+      await createItineraryItem(user.id, {
+        trip_id: tripId,
+        date: departDateOnly,
+        time: departTimeOnly || null,
+        title: t("flights.itineraryTitle", { destination: trip.destination }),
+        category: "Transport",
+        location: route,
+        estimated_cost: offer.price,
+        notes: offer.airlineName || "",
+      });
+
+      await createExpense(user.id, {
+        trip_id: tripId,
+        description: t("flights.expenseDescription", { route }),
+        category: "Transport",
+        amount: offer.price,
+        date: departDateOnly,
+      });
+
+      showToast(t("flights.savedToast"));
+      await loadAll();
+    } catch (err) {
+      showToast(err.message || t("flights.saveFailed"), "error");
+    } finally {
+      setSavingFlightId(null);
     }
   };
 
@@ -493,6 +533,11 @@ export default function TripDashboard() {
                 )}
               </article>
             </div>
+            <FlightLinks
+              destination={trip.destination}
+              startDate={trip.start_date}
+              endDate={trip.end_date}
+            />
             <WeatherForecast
               destination={trip.destination}
               country={trip.country}
@@ -678,6 +723,15 @@ export default function TripDashboard() {
                 </div>
               </div>
             )}
+          </section>
+        )}
+
+        {tab === "Flights" && (
+          <section className="tab-panel">
+            <div className="section-row">
+              <h2>{t("flights.tabTitle", { destination: trip.destination })}</h2>
+            </div>
+            <FlightsTab trip={trip} onSaveFlight={handleSaveFlight} savingId={savingFlightId} />
           </section>
         )}
 

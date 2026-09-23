@@ -9,6 +9,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import CreateTrip from "./pages/CreateTrip";
 import TripDashboard from "./pages/TripDashboard";
+import FlightsSearchPage from "./pages/FlightsSearchPage";
 import NotFound from "./pages/NotFound";
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
               <Route index element={<Landing />} />
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
+              <Route path="flights" element={<FlightsSearchPage />} />
             </Route>
 
             <Route
