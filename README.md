@@ -1,4 +1,4 @@
-# WanderPlan — Smart Trip Planner
+# Movin' — Your trip. Your way.
 
 A portfolio-ready full-stack travel planning app. Create trips, build daily itineraries, discover places, and track your budget — all in one clean dashboard.
 
@@ -100,7 +100,7 @@ Open the URL shown in the terminal (usually `http://localhost:5173`).
 
 | Field | Value |
 |-------|-------|
-| Email | `demo@wanderplan.app` |
+| Email | `demo@movin.app` |
 | Password | `demo123` |
 
 This account includes a sample Sicily trip with itinerary, expenses, and saved places.

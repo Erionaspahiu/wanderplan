@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 import Button from "./Button";
 
 export default function Modal({ open, title, onClose, children, footer, size = "md" }) {
+  const { t } = useLanguage();
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === "Escape" && onClose?.();
@@ -27,7 +29,7 @@ export default function Modal({ open, title, onClose, children, footer, size = "
       >
         <div className="modal-header">
           <h3 id="modal-title">{title}</h3>
-          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close">
+          <button type="button" className="icon-btn" onClick={onClose} aria-label={t("common.close")}>
             <X size={18} />
           </button>
         </div>
@@ -38,7 +40,8 @@ export default function Modal({ open, title, onClose, children, footer, size = "
   );
 }
 
-export function ConfirmDialog({ open, title, message, confirmLabel = "Delete", onConfirm, onClose, loading }) {
+export function ConfirmDialog({ open, title, message, confirmLabel, onConfirm, onClose, loading }) {
+  const { t } = useLanguage();
   return (
     <Modal
       open={open}
@@ -48,10 +51,10 @@ export function ConfirmDialog({ open, title, message, confirmLabel = "Delete", o
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button variant="danger" onClick={onConfirm} loading={loading}>
-            {confirmLabel}
+            {confirmLabel || t("common.delete")}
           </Button>
         </>
       }

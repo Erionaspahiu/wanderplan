@@ -1,4 +1,4 @@
--- WanderPlan database schema + Row Level Security
+-- Movin' database schema + Row Level Security
 -- Run this in the Supabase SQL Editor
 
 -- Profiles (extends auth.users)

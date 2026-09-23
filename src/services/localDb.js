@@ -1,4 +1,4 @@
-const KEY = "wanderplan_store_v1";
+const KEY = "movin_store_v1";
 
 function uid() {
   return crypto.randomUUID();

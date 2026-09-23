@@ -2,10 +2,12 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { buildSicilyDemo } from "../data/demoData";
 import { localDb } from "../services/localDb";
 import { isSupabaseConfigured, supabase } from "../services/supabase";
+import { useLanguage } from "./LanguageContext";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const { t } = useLanguage();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
@@ -57,15 +59,15 @@ export function AuthProvider({ children }) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         setUser(data.user);
-        showToast("Welcome back!");
+        showToast(t("auth.welcomeBackToast"));
         return data.user;
       }
       const sessionUser = localDb.login({ email, password });
       setUser(sessionUser);
-      showToast("Welcome back!");
+      showToast(t("auth.welcomeBackToast"));
       return sessionUser;
     },
-    [showToast]
+    [showToast, t]
   );
 
   const register = useCallback(
@@ -78,15 +80,15 @@ export function AuthProvider({ children }) {
         });
         if (error) throw error;
         setUser(data.user);
-        showToast("Account created!");
+        showToast(t("auth.accountCreatedToast"));
         return data.user;
       }
       const sessionUser = localDb.register({ email, password, fullName });
       setUser(sessionUser);
-      showToast("Account created!");
+      showToast(t("auth.accountCreatedToast"));
       return sessionUser;
     },
-    [showToast]
+    [showToast, t]
   );
 
   const logout = useCallback(async () => {
@@ -96,8 +98,8 @@ export function AuthProvider({ children }) {
       localDb.logout();
     }
     setUser(null);
-    showToast("Signed out", "info");
-  }, [showToast]);
+    showToast(t("auth.signedOutToast"), "info");
+  }, [showToast, t]);
 
   const value = useMemo(
     () => ({

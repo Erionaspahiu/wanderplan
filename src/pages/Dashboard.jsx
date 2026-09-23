@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Globe2, Plus, Plane, Wallet } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { getTrips } from "../services/tripService";
+import { useLanguage } from "../context/LanguageContext";
+import { getTrips, updateTrip } from "../services/tripService";
 import { getExpenses, summarizeExpenses } from "../services/expenseService";
 import { isUpcoming } from "../utils/dates";
 import { formatMoney } from "../utils/currency";
+import { DEFAULT_TRIP_IMAGE, resolveDestinationPhoto } from "../utils/tripPhoto";
 import TripCard from "../components/trips/TripCard";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
@@ -13,6 +15,7 @@ import LoadingSpinner from "../components/ui/LoadingSpinner";
 
 export default function Dashboard() {
   const { user, displayName, showToast } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
   const [spentMap, setSpentMap] = useState({});
@@ -32,8 +35,20 @@ export default function Dashboard() {
           })
         );
         if (mounted) setSpentMap(Object.fromEntries(entries));
+
+        // Trips created before automatic photos existed are stuck on the
+        // generic placeholder — backfill a real one in the background.
+        data
+          .filter((trip) => !trip.image_url || trip.image_url === DEFAULT_TRIP_IMAGE)
+          .forEach(async (trip) => {
+            const resolved = await resolveDestinationPhoto(trip.destination, trip.country);
+            if (!mounted || !resolved?.url) return;
+            const updated = await updateTrip(user.id, trip.id, { image_url: resolved.url });
+            if (!mounted) return;
+            setTrips((prev) => prev.map((existing) => (existing.id === trip.id ? updated : existing)));
+          });
       } catch (err) {
-        showToast(err.message || "Failed to load trips", "error");
+        showToast(err.message || t("dashboard.failedToLoad"), "error");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -42,7 +57,7 @@ export default function Dashboard() {
     return () => {
       mounted = false;
     };
-  }, [user.id, showToast]);
+  }, [user.id, showToast, t]);
 
   const upcoming = trips.filter((t) => isUpcoming(t.start_date)).length;
   const countries = new Set(trips.map((t) => t.country)).size;
@@ -52,7 +67,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="page-center">
-        <LoadingSpinner label="Loading your trips..." />
+        <LoadingSpinner label={t("dashboard.loading")} />
       </div>
     );
   }
@@ -61,12 +76,12 @@ export default function Dashboard() {
     <div className="container page">
       <header className="page-header">
         <div>
-          <h1>Welcome back, {displayName}!</h1>
-          <p>Where are we going next?</p>
+          <h1>{t("dashboard.welcome", { name: displayName })}</h1>
+          <p>{t("dashboard.subtitle")}</p>
         </div>
         <Link to="/trips/new">
           <Button>
-            <Plus size={18} /> Create New Trip
+            <Plus size={18} /> {t("dashboard.createNewTrip")}
           </Button>
         </Link>
       </header>
@@ -76,34 +91,34 @@ export default function Dashboard() {
           <div className="stat-icon">
             <Plane size={20} />
           </div>
-          <p className="stat-label">Upcoming Trips</p>
+          <p className="stat-label">{t("dashboard.upcomingTrips")}</p>
           <p className="stat-value">{upcoming}</p>
         </article>
         <article className="stat-card card">
           <div className="stat-icon">
             <Globe2 size={20} />
           </div>
-          <p className="stat-label">Countries Visited</p>
+          <p className="stat-label">{t("dashboard.countriesVisited")}</p>
           <p className="stat-value">{countries}</p>
         </article>
         <article className="stat-card card">
           <div className="stat-icon">
             <Wallet size={20} />
           </div>
-          <p className="stat-label">Total Planned Budget</p>
+          <p className="stat-label">{t("dashboard.totalPlannedBudget")}</p>
           <p className="stat-value">{formatMoney(totalBudget, currency)}</p>
         </article>
       </div>
 
       <section className="section-block">
         <div className="section-row">
-          <h2>Your trips</h2>
+          <h2>{t("dashboard.yourTrips")}</h2>
         </div>
         {trips.length === 0 ? (
           <EmptyState
-            title="No trips yet"
-            description="Create your first trip and start building an itinerary."
-            actionLabel="Create New Trip"
+            title={t("dashboard.noTripsTitle")}
+            description={t("dashboard.noTripsDesc")}
+            actionLabel={t("dashboard.createNewTrip")}
             onAction={() => navigate("/trips/new")}
           />
         ) : (

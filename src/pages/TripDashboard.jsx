@@ -9,7 +9,9 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { deleteTrip, getTrip } from "../services/tripService";
+import { useLanguage } from "../context/LanguageContext";
+import { deleteTrip, getTrip, updateTrip } from "../services/tripService";
+import { DEFAULT_TRIP_IMAGE, resolveDestinationPhoto } from "../utils/tripPhoto";
 import {
   createItineraryItem,
   deleteItineraryItem,
@@ -38,6 +40,8 @@ import { countryFlag, validateExpense, validateItineraryItem } from "../utils/va
 import BudgetCard from "../components/budget/BudgetCard";
 import ItineraryItem from "../components/itinerary/ItineraryItem";
 import PlaceCard from "../components/places/PlaceCard";
+import WeatherForecast from "../components/trips/WeatherForecast";
+import TransportLinks from "../components/trips/TransportLinks";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import Input from "../components/ui/Input";
@@ -45,6 +49,12 @@ import LoadingSpinner from "../components/ui/LoadingSpinner";
 import Modal, { ConfirmDialog } from "../components/ui/Modal";
 
 const TABS = ["Overview", "Itinerary", "Places", "Budget"];
+const TAB_KEYS = {
+  Overview: "trip.tabs.overview",
+  Itinerary: "trip.tabs.itinerary",
+  Places: "trip.tabs.places",
+  Budget: "trip.tabs.budget",
+};
 
 const emptyItinerary = {
   date: "",
@@ -66,6 +76,7 @@ const emptyExpense = {
 export default function TripDashboard() {
   const { tripId } = useParams();
   const { user, showToast } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const [trip, setTrip] = useState(null);
@@ -99,12 +110,12 @@ export default function TripDashboard() {
       getExpenses(user.id, tripId),
       getSavedPlaces(user.id, tripId),
     ]);
-    if (!tripData) throw new Error("Trip not found");
+    if (!tripData) throw new Error(t("trip.notFoundTitle"));
     setTrip(tripData);
     setItems(itineraryData);
     setExpenses(expenseData);
     setSaved(savedData);
-  }, [user.id, tripId]);
+  }, [user.id, tripId, t]);
 
   useEffect(() => {
     let mounted = true;
@@ -112,7 +123,7 @@ export default function TripDashboard() {
       try {
         await loadAll();
       } catch (err) {
-        if (mounted) showToast(err.message || "Failed to load trip", "error");
+        if (mounted) showToast(err.message || t("trip.failedToLoad"), "error");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -120,7 +131,23 @@ export default function TripDashboard() {
     return () => {
       mounted = false;
     };
-  }, [loadAll, showToast]);
+  }, [loadAll, showToast, t]);
+
+  // Trips created before automatic photos existed are stuck on the
+  // generic placeholder — backfill a real one in the background.
+  useEffect(() => {
+    if (!trip || (trip.image_url && trip.image_url !== DEFAULT_TRIP_IMAGE)) return undefined;
+    let mounted = true;
+    (async () => {
+      const resolved = await resolveDestinationPhoto(trip.destination, trip.country);
+      if (!mounted || !resolved?.url) return;
+      const updated = await updateTrip(user.id, tripId, { image_url: resolved.url });
+      if (mounted) setTrip(updated);
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [trip?.id, trip?.image_url, trip?.destination, trip?.country, user.id, tripId]);
 
   useEffect(() => {
     if (!trip) return undefined;
@@ -200,15 +227,15 @@ export default function TripDashboard() {
       };
       if (editingItinerary) {
         await updateItineraryItem(user.id, editingItinerary.id, payload);
-        showToast("Itinerary item updated");
+        showToast(t("trip.itineraryUpdatedToast"));
       } else {
         await createItineraryItem(user.id, payload);
-        showToast("Itinerary item added");
+        showToast(t("trip.itineraryAddedToast"));
       }
       setItineraryOpen(false);
       await loadAll();
     } catch (err) {
-      showToast(err.message || "Could not save item", "error");
+      showToast(err.message || t("trip.itinerarySaveFailed"), "error");
     } finally {
       setSaving(false);
     }
@@ -249,15 +276,15 @@ export default function TripDashboard() {
       };
       if (editingExpense) {
         await updateExpense(user.id, editingExpense.id, payload);
-        showToast("Expense updated");
+        showToast(t("trip.expenseUpdatedToast"));
       } else {
         await createExpense(user.id, payload);
-        showToast("Expense added");
+        showToast(t("trip.expenseAddedToast"));
       }
       setExpenseOpen(false);
       await loadAll();
     } catch (err) {
-      showToast(err.message || "Could not save expense", "error");
+      showToast(err.message || t("trip.expenseSaveFailed"), "error");
     } finally {
       setSaving(false);
     }
@@ -275,10 +302,10 @@ export default function TripDashboard() {
         image_url: place.image_url,
         external_id: place.external_id,
       });
-      showToast("Place saved");
+      showToast(t("trip.placeSavedToast"));
       await loadAll();
     } catch (err) {
-      showToast(err.message || "Could not save place", "error");
+      showToast(err.message || t("trip.placeSaveFailed"), "error");
     }
   };
 
@@ -287,10 +314,10 @@ export default function TripDashboard() {
     if (!found) return;
     try {
       await removeSavedPlace(user.id, found.id);
-      showToast("Removed from saved");
+      showToast(t("trip.placeRemovedToast"));
       await loadAll();
     } catch (err) {
-      showToast(err.message || "Could not remove place", "error");
+      showToast(err.message || t("trip.placeRemoveFailed"), "error");
     }
   };
 
@@ -310,20 +337,20 @@ export default function TripDashboard() {
     try {
       if (confirm.type === "itinerary") {
         await deleteItineraryItem(user.id, confirm.id);
-        showToast("Item deleted");
+        showToast(t("trip.itineraryDeletedToast"));
       } else if (confirm.type === "expense") {
         await deleteExpense(user.id, confirm.id);
-        showToast("Expense deleted");
+        showToast(t("trip.expenseDeletedToast"));
       } else if (confirm.type === "trip") {
         await deleteTrip(user.id, tripId);
-        showToast("Trip deleted");
+        showToast(t("trip.tripDeletedToast"));
         navigate("/dashboard");
         return;
       }
       setConfirm(null);
       await loadAll();
     } catch (err) {
-      showToast(err.message || "Delete failed", "error");
+      showToast(err.message || t("trip.deleteFailedToast"), "error");
     } finally {
       setSaving(false);
     }
@@ -332,7 +359,7 @@ export default function TripDashboard() {
   if (loading) {
     return (
       <div className="page-center">
-        <LoadingSpinner label="Loading trip..." />
+        <LoadingSpinner label={t("trip.loading")} />
       </div>
     );
   }
@@ -341,9 +368,9 @@ export default function TripDashboard() {
     return (
       <div className="container page">
         <EmptyState
-          title="Trip not found"
-          description="This trip may have been deleted."
-          actionLabel="Back to dashboard"
+          title={t("trip.notFoundTitle")}
+          description={t("trip.notFoundDesc")}
+          actionLabel={t("trip.backToDashboard")}
           onAction={() => navigate("/dashboard")}
         />
       </div>
@@ -363,7 +390,7 @@ export default function TripDashboard() {
         <div className="trip-hero-overlay" />
         <div className="container trip-hero-content">
           <Link to="/dashboard" className="back-link">
-            <ArrowLeft size={16} /> Back to trips
+            <ArrowLeft size={16} /> {t("trip.backToTrips")}
           </Link>
           <p className="trip-flag">
             {countryFlag(trip.country)} {trip.country}
@@ -376,7 +403,7 @@ export default function TripDashboard() {
               <CalendarDays size={16} /> {formatDateRange(trip.start_date, trip.end_date)}
             </span>
             <span>
-              <Users size={16} /> {trip.travelers} travelers
+              <Users size={16} /> {trip.travelers} {t("trip.travelers")}
             </span>
           </div>
         </div>
@@ -391,16 +418,16 @@ export default function TripDashboard() {
         />
 
         <div className="tabs" role="tablist">
-          {TABS.map((t) => (
+          {TABS.map((tabName) => (
             <button
-              key={t}
+              key={tabName}
               type="button"
               role="tab"
-              aria-selected={tab === t}
-              className={`tab ${tab === t ? "active" : ""}`}
-              onClick={() => setTab(t)}
+              aria-selected={tab === tabName}
+              className={`tab ${tab === tabName ? "active" : ""}`}
+              onClick={() => setTab(tabName)}
             >
-              {t}
+              {t(TAB_KEYS[tabName])}
             </button>
           ))}
         </div>
@@ -409,38 +436,38 @@ export default function TripDashboard() {
           <section className="tab-panel">
             <div className="overview-grid">
               <article className="card">
-                <h3>Trip snapshot</h3>
+                <h3>{t("trip.snapshotTitle")}</h3>
                 <ul className="snapshot-list">
                   <li>
-                    <span>Destination</span>
+                    <span>{t("trip.destination")}</span>
                     <strong>
                       {trip.destination}, {trip.country}
                     </strong>
                   </li>
                   <li>
-                    <span>Dates</span>
+                    <span>{t("trip.dates")}</span>
                     <strong>{formatDateRange(trip.start_date, trip.end_date)}</strong>
                   </li>
                   <li>
-                    <span>Travelers</span>
+                    <span>{t("trip.travelersLabel")}</span>
                     <strong>{trip.travelers}</strong>
                   </li>
                   <li>
-                    <span>Itinerary items</span>
+                    <span>{t("trip.itineraryItems")}</span>
                     <strong>{items.length}</strong>
                   </li>
                   <li>
-                    <span>Saved places</span>
+                    <span>{t("trip.savedPlaces")}</span>
                     <strong>{saved.length}</strong>
                   </li>
                   <li>
-                    <span>Expenses logged</span>
+                    <span>{t("trip.expensesLogged")}</span>
                     <strong>{expenses.length}</strong>
                   </li>
                 </ul>
               </article>
               <article className="card">
-                <h3>Next up</h3>
+                <h3>{t("trip.nextUpTitle")}</h3>
                 {items[0] ? (
                   <div className="next-up">
                     <p className="eyebrow">{formatDate(items[0].date)}</p>
@@ -448,16 +475,16 @@ export default function TripDashboard() {
                       {items[0].time ? `${items[0].time} — ` : ""}
                       {items[0].title}
                     </h4>
-                    <p>{items[0].location || items[0].category}</p>
+                    <p>{items[0].location || t(`categories.itinerary.${items[0].category}`)}</p>
                     <Button variant="secondary" onClick={() => setTab("Itinerary")}>
-                      Open itinerary
+                      {t("trip.openItinerary")}
                     </Button>
                   </div>
                 ) : (
                   <EmptyState
-                    title="No plans yet"
-                    description="Add your first itinerary item to get started."
-                    actionLabel="Add item"
+                    title={t("trip.noPlansTitle")}
+                    description={t("trip.noPlansDesc")}
+                    actionLabel={t("trip.addItem")}
                     onAction={() => {
                       setTab("Itinerary");
                       openCreateItinerary();
@@ -466,10 +493,17 @@ export default function TripDashboard() {
                 )}
               </article>
             </div>
+            <WeatherForecast
+              destination={trip.destination}
+              country={trip.country}
+              startDate={trip.start_date}
+              endDate={trip.end_date}
+            />
+            <TransportLinks destination={trip.destination} />
             <div className="danger-zone card">
               <div>
-                <h3>Delete trip</h3>
-                <p>This permanently removes the trip, itinerary, places and expenses.</p>
+                <h3>{t("trip.dangerZoneTitle")}</h3>
+                <p>{t("trip.dangerZoneDesc")}</p>
               </div>
               <Button
                 variant="danger"
@@ -477,12 +511,12 @@ export default function TripDashboard() {
                   setConfirm({
                     type: "trip",
                     id: tripId,
-                    title: "Delete this trip?",
-                    message: `Delete ${trip.destination}? This cannot be undone.`,
+                    title: t("trip.deleteTripConfirmTitle"),
+                    message: t("trip.deleteTripConfirmMessage", { destination: trip.destination }),
                   })
                 }
               >
-                <Trash2 size={16} /> Delete trip
+                <Trash2 size={16} /> {t("trip.deleteTrip")}
               </Button>
             </div>
           </section>
@@ -491,16 +525,16 @@ export default function TripDashboard() {
         {tab === "Itinerary" && (
           <section className="tab-panel">
             <div className="section-row">
-              <h2>Daily itinerary</h2>
+              <h2>{t("trip.dailyItinerary")}</h2>
               <Button onClick={() => openCreateItinerary()}>
-                <Plus size={16} /> Add item
+                <Plus size={16} /> {t("trip.addItem")}
               </Button>
             </div>
             {grouped.length === 0 ? (
               <EmptyState
-                title="Your itinerary is empty"
-                description="Plan each day with activities, meals and transport."
-                actionLabel="Add first item"
+                title={t("trip.itineraryEmptyTitle")}
+                description={t("trip.itineraryEmptyDesc")}
+                actionLabel={t("trip.addFirstItem")}
                 onAction={() => openCreateItinerary()}
               />
             ) : (
@@ -508,7 +542,10 @@ export default function TripDashboard() {
                 {grouped.map(([date, dayItems], index) => (
                   <div key={date} className="day-block card">
                     <h3>
-                      Day {dayList.indexOf(date) + 1 || index + 1} — {formatDate(date)}
+                      {t("trip.day", {
+                        number: dayList.indexOf(date) + 1 || index + 1,
+                        date: formatDate(date),
+                      })}
                     </h3>
                     <div className="day-items">
                       {dayItems.map((item) => (
@@ -521,8 +558,8 @@ export default function TripDashboard() {
                             setConfirm({
                               type: "itinerary",
                               id: it.id,
-                              title: "Delete itinerary item?",
-                              message: `Remove “${it.title}” from your plan?`,
+                              title: t("trip.deleteItineraryConfirmTitle"),
+                              message: t("trip.deleteItineraryConfirmMessage", { title: it.title }),
                             })
                           }
                         />
@@ -540,12 +577,9 @@ export default function TripDashboard() {
             <div className="famous-panel card">
               <div className="famous-panel-header">
                 <div>
-                  <p className="eyebrow">Must visit</p>
-                  <h2>Famous places in {trip.destination}</h2>
-                  <p>
-                    Top sights travelers usually put on their list — save them or add them straight
-                    to your itinerary.
-                  </p>
+                  <p className="eyebrow">{t("trip.mustVisit")}</p>
+                  <h2>{t("trip.famousPlacesIn", { destination: trip.destination })}</h2>
+                  <p>{t("trip.famousPlacesDesc")}</p>
                 </div>
               </div>
               {getFamousPlaceNames(trip.destination, trip.country).length > 0 && (
@@ -570,20 +604,18 @@ export default function TripDashboard() {
                   ))}
                 </div>
               ) : (
-                <p className="muted">
-                  No curated highlights yet for this destination — browse all places below.
-                </p>
+                <p className="muted">{t("trip.noCuratedHighlights")}</p>
               )}
             </div>
 
             <div className="section-row wrap">
               <div>
-                <h2>All places in {trip.destination}</h2>
-                <p>Hotels, restaurants, attractions and more for this trip.</p>
+                <h2>{t("trip.allPlacesIn", { destination: trip.destination })}</h2>
+                <p>{t("trip.allPlacesDesc")}</p>
               </div>
               <Input
                 id="place-search"
-                placeholder="Search places..."
+                placeholder={t("trip.searchPlaces")}
                 value={placeQuery}
                 onChange={(e) => setPlaceQuery(e.target.value)}
                 className="search-field"
@@ -595,7 +627,7 @@ export default function TripDashboard() {
                 className={`chip ${placeFilter === "All" ? "active" : ""}`}
                 onClick={() => setPlaceFilter("All")}
               >
-                All
+                {t("common.all")}
               </button>
               {PLACE_CATEGORIES.map((c) => (
                 <button
@@ -604,14 +636,14 @@ export default function TripDashboard() {
                   className={`chip ${placeFilter === c ? "active" : ""}`}
                   onClick={() => setPlaceFilter(c)}
                 >
-                  {c}
+                  {t(`categories.place.${c}`)}
                 </button>
               ))}
             </div>
             {places.length === 0 ? (
               <EmptyState
-                title={`No places found for ${trip.destination}`}
-                description="Try another category, clear your search, or add your own spots to the itinerary."
+                title={t("trip.noPlacesFoundTitle", { destination: trip.destination })}
+                description={t("trip.noPlacesFoundDesc")}
               />
             ) : (
               <div className="places-grid">
@@ -630,7 +662,7 @@ export default function TripDashboard() {
             )}
             {saved.length > 0 && (
               <div className="section-block">
-                <h3>Saved for this trip</h3>
+                <h3>{t("trip.savedForThisTrip")}</h3>
                 <div className="places-grid">
                   {saved.map((place) => (
                     <PlaceCard
@@ -652,22 +684,22 @@ export default function TripDashboard() {
         {tab === "Budget" && (
           <section className="tab-panel">
             <div className="section-row">
-              <h2>Budget tracker</h2>
+              <h2>{t("trip.budgetTracker")}</h2>
               <Button onClick={openCreateExpense}>
-                <Plus size={16} /> Add expense
+                <Plus size={16} /> {t("trip.addExpense")}
               </Button>
             </div>
             <div className="budget-layout">
               <article className="card">
-                <h3>Spending by category</h3>
+                <h3>{t("trip.spendingByCategory")}</h3>
                 {Object.keys(summary.byCategory).length === 0 ? (
-                  <p className="muted">No expenses yet.</p>
+                  <p className="muted">{t("trip.noExpensesYet")}</p>
                 ) : (
                   <div className="category-bars">
                     {Object.entries(summary.byCategory).map(([cat, amount]) => (
                       <div key={cat} className="cat-row">
                         <div className="budget-mini-row">
-                          <span>{cat}</span>
+                          <span>{t(`categories.expense.${cat}`)}</span>
                           <span>{formatMoney(amount, trip.currency)}</span>
                         </div>
                         <div className="progress-bar">
@@ -682,12 +714,12 @@ export default function TripDashboard() {
                 )}
               </article>
               <article className="card">
-                <h3>All expenses</h3>
+                <h3>{t("trip.allExpenses")}</h3>
                 {expenses.length === 0 ? (
                   <EmptyState
-                    title="No expenses logged"
-                    description="Track hotels, food, transport and more."
-                    actionLabel="Add expense"
+                    title={t("trip.noExpensesLoggedTitle")}
+                    description={t("trip.noExpensesLoggedDesc")}
+                    actionLabel={t("trip.addExpense")}
                     onAction={openCreateExpense}
                   />
                 ) : (
@@ -697,7 +729,7 @@ export default function TripDashboard() {
                         <div>
                           <strong>{expense.description}</strong>
                           <p>
-                            {expense.category} · {formatDate(expense.date)}
+                            {t(`categories.expense.${expense.category}`)} · {formatDate(expense.date)}
                           </p>
                         </div>
                         <div className="expense-right">
@@ -707,7 +739,7 @@ export default function TripDashboard() {
                           <button
                             type="button"
                             className="icon-btn"
-                            aria-label="Edit expense"
+                            aria-label={t("trip.editExpense")}
                             onClick={() => openEditExpense(expense)}
                           >
                             <Pencil size={16} />
@@ -715,13 +747,15 @@ export default function TripDashboard() {
                           <button
                             type="button"
                             className="icon-btn danger"
-                            aria-label="Delete expense"
+                            aria-label={t("trip.deleteExpense")}
                             onClick={() =>
                               setConfirm({
                                 type: "expense",
                                 id: expense.id,
-                                title: "Delete expense?",
-                                message: `Remove “${expense.description}”?`,
+                                title: t("trip.deleteExpenseConfirmTitle"),
+                                message: t("trip.deleteExpenseConfirmMessage", {
+                                  description: expense.description,
+                                }),
                               })
                             }
                           >
@@ -740,15 +774,15 @@ export default function TripDashboard() {
 
       <Modal
         open={itineraryOpen}
-        title={editingItinerary ? "Edit itinerary item" : "Add itinerary item"}
+        title={editingItinerary ? t("trip.itineraryModalEdit") : t("trip.itineraryModalAdd")}
         onClose={() => setItineraryOpen(false)}
         footer={
           <>
             <Button variant="ghost" onClick={() => setItineraryOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button onClick={submitItinerary} loading={saving}>
-              Save
+              {t("common.save")}
             </Button>
           </>
         }
@@ -758,44 +792,44 @@ export default function TripDashboard() {
             <Input
               id="it-date"
               type="date"
-              label="Date"
+              label={t("trip.fieldDate")}
               value={itineraryForm.date}
               min={trip.start_date}
               max={trip.end_date}
               onChange={(e) => setItineraryForm((f) => ({ ...f, date: e.target.value }))}
-              error={itineraryErrors.date}
+              error={itineraryErrors.date && t(itineraryErrors.date)}
             />
             <Input
               id="it-time"
               type="time"
-              label="Time"
+              label={t("trip.fieldTime")}
               value={itineraryForm.time}
               onChange={(e) => setItineraryForm((f) => ({ ...f, time: e.target.value }))}
             />
             <Input
               id="it-title"
-              label="Title"
+              label={t("trip.fieldTitle")}
               value={itineraryForm.title}
               onChange={(e) => setItineraryForm((f) => ({ ...f, title: e.target.value }))}
-              error={itineraryErrors.title}
+              error={itineraryErrors.title && t(itineraryErrors.title)}
             />
             <Input
               id="it-category"
               as="select"
-              label="Category"
+              label={t("trip.fieldCategory")}
               value={itineraryForm.category}
               onChange={(e) => setItineraryForm((f) => ({ ...f, category: e.target.value }))}
-              error={itineraryErrors.category}
+              error={itineraryErrors.category && t(itineraryErrors.category)}
             >
               {ITINERARY_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
-                  {c}
+                  {t(`categories.itinerary.${c}`)}
                 </option>
               ))}
             </Input>
             <Input
               id="it-location"
-              label="Location"
+              label={t("trip.fieldLocation")}
               value={itineraryForm.location}
               onChange={(e) => setItineraryForm((f) => ({ ...f, location: e.target.value }))}
             />
@@ -804,7 +838,7 @@ export default function TripDashboard() {
               type="number"
               min="0"
               step="1"
-              label="Estimated cost"
+              label={t("trip.fieldEstimatedCost")}
               value={itineraryForm.estimated_cost}
               onChange={(e) => setItineraryForm((f) => ({ ...f, estimated_cost: e.target.value }))}
             />
@@ -812,7 +846,7 @@ export default function TripDashboard() {
           <Input
             id="it-notes"
             as="textarea"
-            label="Notes"
+            label={t("trip.fieldNotes")}
             rows={3}
             value={itineraryForm.notes}
             onChange={(e) => setItineraryForm((f) => ({ ...f, notes: e.target.value }))}
@@ -822,15 +856,15 @@ export default function TripDashboard() {
 
       <Modal
         open={expenseOpen}
-        title={editingExpense ? "Edit expense" : "Add expense"}
+        title={editingExpense ? t("trip.expenseModalEdit") : t("trip.expenseModalAdd")}
         onClose={() => setExpenseOpen(false)}
         footer={
           <>
             <Button variant="ghost" onClick={() => setExpenseOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button onClick={submitExpense} loading={saving}>
-              Save
+              {t("common.save")}
             </Button>
           </>
         }
@@ -838,23 +872,23 @@ export default function TripDashboard() {
         <form className="form-stack" onSubmit={submitExpense}>
           <Input
             id="ex-desc"
-            label="Description"
+            label={t("trip.fieldDescription")}
             value={expenseForm.description}
             onChange={(e) => setExpenseForm((f) => ({ ...f, description: e.target.value }))}
-            error={expenseErrors.description}
+            error={expenseErrors.description && t(expenseErrors.description)}
           />
           <div className="form-grid">
             <Input
               id="ex-cat"
               as="select"
-              label="Category"
+              label={t("trip.fieldCategory")}
               value={expenseForm.category}
               onChange={(e) => setExpenseForm((f) => ({ ...f, category: e.target.value }))}
-              error={expenseErrors.category}
+              error={expenseErrors.category && t(expenseErrors.category)}
             >
               {EXPENSE_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
-                  {c}
+                  {t(`categories.expense.${c}`)}
                 </option>
               ))}
             </Input>
@@ -863,18 +897,18 @@ export default function TripDashboard() {
               type="number"
               min="0"
               step="0.01"
-              label="Amount"
+              label={t("trip.fieldAmount")}
               value={expenseForm.amount}
               onChange={(e) => setExpenseForm((f) => ({ ...f, amount: e.target.value }))}
-              error={expenseErrors.amount}
+              error={expenseErrors.amount && t(expenseErrors.amount)}
             />
             <Input
               id="ex-date"
               type="date"
-              label="Date"
+              label={t("trip.fieldDate")}
               value={expenseForm.date}
               onChange={(e) => setExpenseForm((f) => ({ ...f, date: e.target.value }))}
-              error={expenseErrors.date}
+              error={expenseErrors.date && t(expenseErrors.date)}
             />
           </div>
         </form>
@@ -884,6 +918,7 @@ export default function TripDashboard() {
         open={Boolean(confirm)}
         title={confirm?.title}
         message={confirm?.message}
+        confirmLabel={t("common.delete")}
         onClose={() => setConfirm(null)}
         onConfirm={runConfirm}
         loading={saving}

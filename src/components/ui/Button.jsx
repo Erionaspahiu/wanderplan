@@ -1,3 +1,5 @@
+import { useLanguage } from "../../context/LanguageContext";
+
 export default function Button({
   children,
   variant = "primary",
@@ -8,6 +10,7 @@ export default function Button({
   loading,
   ...props
 }) {
+  const { t } = useLanguage();
   return (
     <button
       type={type}
@@ -15,7 +18,7 @@ export default function Button({
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? "Please wait..." : children}
+      {loading ? t("common.pleaseWait") : children}
     </button>
   );
 }

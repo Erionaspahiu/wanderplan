@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { validateAuth } from "../utils/validation";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 
 export default function Register() {
   const { register, user, isDemoMode } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     fullName: "",
@@ -38,7 +40,7 @@ export default function Register() {
       });
       navigate("/dashboard", { replace: true });
     } catch (err) {
-      setFormError(err.message || "Unable to create account");
+      setFormError(err.message || t("auth.unableToCreateAccount"));
     } finally {
       setLoading(false);
     }
@@ -47,13 +49,12 @@ export default function Register() {
   return (
     <div className="auth-page">
       <div className="auth-card card">
-        <h1>Create your account</h1>
-        <p className="auth-sub">Start planning smarter trips with WanderPlan.</p>
+        <h1>{t("auth.registerTitle")}</h1>
+        <p className="auth-sub">{t("auth.registerSub")}</p>
 
         {isDemoMode && (
           <div className="info-banner">
-            Running in demo mode (localStorage). Add Supabase keys in <code>.env</code> for a real
-            backend.
+            {t("auth.demoBannerRegisterPrefix")} <code>.env</code> {t("auth.demoBannerRegisterSuffix")}
           </div>
         )}
 
@@ -61,50 +62,50 @@ export default function Register() {
           <Input
             id="fullName"
             name="fullName"
-            label="Full name"
+            label={t("auth.fullName")}
             value={form.fullName}
             onChange={onChange}
-            error={errors.fullName}
+            error={errors.fullName && t(errors.fullName)}
             autoComplete="name"
           />
           <Input
             id="email"
             name="email"
             type="email"
-            label="Email"
+            label={t("auth.email")}
             value={form.email}
             onChange={onChange}
-            error={errors.email}
+            error={errors.email && t(errors.email)}
             autoComplete="email"
           />
           <Input
             id="password"
             name="password"
             type="password"
-            label="Password"
+            label={t("auth.password")}
             value={form.password}
             onChange={onChange}
-            error={errors.password}
+            error={errors.password && t(errors.password)}
             autoComplete="new-password"
           />
           <Input
             id="confirmPassword"
             name="confirmPassword"
             type="password"
-            label="Confirm password"
+            label={t("auth.confirmPassword")}
             value={form.confirmPassword}
             onChange={onChange}
-            error={errors.confirmPassword}
+            error={errors.confirmPassword && t(errors.confirmPassword)}
             autoComplete="new-password"
           />
           {formError && <p className="form-error">{formError}</p>}
           <Button type="submit" className="w-full" loading={loading}>
-            Get Started
+            {t("nav.getStarted")}
           </Button>
         </form>
 
         <p className="auth-footer">
-          Already have an account? <Link to="/login">Sign in</Link>
+          {t("auth.alreadyHaveAccount")} <Link to="/login">{t("auth.signInLink")}</Link>
         </p>
       </div>
     </div>

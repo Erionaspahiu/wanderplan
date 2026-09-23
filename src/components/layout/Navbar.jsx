@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Compass, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useLanguage } from "../../context/LanguageContext";
+import { LANGUAGES } from "../../i18n";
 import Button from "../ui/Button";
 
 export default function Navbar({ variant = "public" }) {
   const { user, logout, displayName, isDemoMode } = useAuth();
+  const { t, lang, setLang } = useLanguage();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -21,10 +24,7 @@ export default function Navbar({ variant = "public" }) {
     <header className={`navbar ${variant === "app" ? "navbar-app" : ""}`}>
       <div className="container navbar-inner">
         <Link to={user ? "/dashboard" : "/"} className="brand" onClick={close}>
-          <span className="brand-mark">
-            <Compass size={20} />
-          </span>
-          <span className="brand-text">WanderPlan</span>
+          <img src="/images/logo.png" alt="Movin'" className="brand-logo" />
         </Link>
 
         <button
@@ -40,13 +40,13 @@ export default function Navbar({ variant = "public" }) {
           {variant === "public" && (
             <>
               <a href="/#explore" onClick={close}>
-                Explore
+                {t("nav.explore")}
               </a>
               <a href="/#how-it-works" onClick={close}>
-                How It Works
+                {t("nav.howItWorks")}
               </a>
               <NavLink to={user ? "/dashboard" : "/login"} onClick={close}>
-                My Trips
+                {t("nav.myTrips")}
               </NavLink>
             </>
           )}
@@ -54,30 +54,40 @@ export default function Navbar({ variant = "public" }) {
           {variant === "app" && (
             <>
               <NavLink to="/dashboard" onClick={close}>
-                Dashboard
+                {t("nav.dashboard")}
               </NavLink>
               <NavLink to="/trips/new" onClick={close}>
-                New Trip
+                {t("nav.newTrip")}
               </NavLink>
             </>
           )}
 
           <div className="nav-actions">
-            {isDemoMode && <span className="demo-badge">Demo mode</span>}
+            <label className="lang-switcher">
+              <span className="sr-only">Language</span>
+              <select value={lang} onChange={(e) => setLang(e.target.value)}>
+                {LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.flag} {l.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {isDemoMode && <span className="demo-badge">{t("nav.demoMode")}</span>}
             {user ? (
               <>
-                <span className="nav-user">Hi, {displayName}</span>
+                <span className="nav-user">{t("nav.hi", { name: displayName })}</span>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
-                  Sign out
+                  {t("nav.signOut")}
                 </Button>
               </>
             ) : (
               <>
                 <Link to="/login" onClick={close}>
-                  Sign In
+                  {t("nav.signIn")}
                 </Link>
                 <Button size="sm" onClick={() => { close(); navigate("/register"); }}>
-                  Get Started
+                  {t("nav.getStarted")}
                 </Button>
               </>
             )}

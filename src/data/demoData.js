@@ -30,8 +30,9 @@ export const DESTINATIONS = [
   {
     name: "Sicily",
     country: "Italy",
-    image:
-      "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=800&q=80",
+    image: "/images/destinations/sicily.webp",
+    imageAlt: "The ancient Greek theatre of Taormina overlooking the Sicilian coastline",
+    orientation: "portrait",
     famousPlaces: [
       "Mount Etna",
       "Taormina Greek Theatre",
@@ -43,8 +44,9 @@ export const DESTINATIONS = [
   {
     name: "Paris",
     country: "France",
-    image:
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80",
+    image: "/images/destinations/paris.webp",
+    imageAlt: "A Parisian street corner at dusk, café lights glowing with the Eiffel Tower in the distance",
+    orientation: "landscape",
     famousPlaces: [
       "Eiffel Tower",
       "Louvre Museum",
@@ -56,8 +58,9 @@ export const DESTINATIONS = [
   {
     name: "Barcelona",
     country: "Spain",
-    image:
-      "https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=800&q=80",
+    image: "/images/destinations/barcelona.webp",
+    imageAlt: "Two people walking through a quiet Gothic Quarter alleyway at dusk",
+    orientation: "portrait",
     famousPlaces: [
       "Sagrada Família",
       "Park Güell",
@@ -69,8 +72,9 @@ export const DESTINATIONS = [
   {
     name: "Santorini",
     country: "Greece",
-    image:
-      "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?auto=format&fit=crop&w=800&q=80",
+    image: "/images/destinations/santorini.webp",
+    imageAlt: "Whitewashed buildings and a windmill overlooking the Aegean Sea in Oia, Santorini",
+    orientation: "portrait",
     famousPlaces: [
       "Oia Sunset",
       "Fira Town",
@@ -82,8 +86,9 @@ export const DESTINATIONS = [
   {
     name: "Rome",
     country: "Italy",
-    image:
-      "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=800&q=80",
+    image: "/images/destinations/rome.webp",
+    imageAlt: "An empty Roman street bathed in golden-hour light, leading toward St. Peter's Basilica",
+    orientation: "landscape",
     famousPlaces: [
       "Colosseum",
       "Vatican Museums",
@@ -95,14 +100,57 @@ export const DESTINATIONS = [
   {
     name: "London",
     country: "United Kingdom",
-    image:
-      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80",
+    image: "/images/destinations/london.webp",
+    imageAlt: "A quiet cobblestone mews lined with flowers in London",
+    orientation: "landscape",
     famousPlaces: [
       "Big Ben & Westminster",
       "Tower of London",
       "British Museum",
       "Camden Market",
       "Hyde Park",
+    ],
+  },
+  {
+    name: "Pristina",
+    country: "Kosovo",
+    image: "/images/default-trip.webp",
+    imageAlt: "Pristina, Kosovo",
+    orientation: "landscape",
+    famousPlaces: [
+      "Newborn Monument",
+      "Gërmia Park",
+      "Kosovo Museum",
+      "Mother Teresa Cathedral",
+      "Prizren Old Town",
+    ],
+  },
+  {
+    name: "Skopje",
+    country: "North Macedonia",
+    image: "/images/default-trip.webp",
+    imageAlt: "Skopje, North Macedonia",
+    orientation: "landscape",
+    famousPlaces: [
+      "Skopje Old Bazaar",
+      "Stone Bridge & Macedonia Square",
+      "Matka Canyon",
+      "Kale Fortress",
+      "Mother Teresa Memorial House",
+    ],
+  },
+  {
+    name: "Tirana",
+    country: "Albania",
+    image: "/images/default-trip.webp",
+    imageAlt: "Tirana, Albania",
+    orientation: "landscape",
+    famousPlaces: [
+      "Skanderbeg Square",
+      "Bunk'Art",
+      "Dajti Ekspres Cable Car",
+      "Et'hem Bey Mosque",
+      "Pyramid of Tirana",
     ],
   },
 ];
@@ -124,6 +172,24 @@ export function findDestinationGuide(destination = "", country = "") {
 }
 
 /**
+ * Name-based match only (no country fallback) — used where a loose
+ * "same country" guess would be actively wrong, like picking a photo
+ * for a specific destination.
+ */
+export function findCuratedDestination(destination = "") {
+  const dest = destination.toLowerCase().trim();
+  if (dest.length < 3) return null;
+  return (
+    DESTINATIONS.find(
+      (d) =>
+        d.name.toLowerCase() === dest ||
+        dest.includes(d.name.toLowerCase()) ||
+        d.name.toLowerCase().includes(dest)
+    ) || null
+  );
+}
+
+/**
  * Mock places catalog keyed by destination.
  * Replace discoverPlaces() later with Google Places / Foursquare.
  */
@@ -137,8 +203,7 @@ export const MOCK_PLACES = [
     location: "Taormina, Sicily",
     rating: 4.7,
     estimated_price: 140,
-    image_url:
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-hotel-1.webp",
     highlight: false,
   },
   {
@@ -149,8 +214,7 @@ export const MOCK_PLACES = [
     location: "Catania, Sicily",
     rating: 4.4,
     estimated_price: 95,
-    image_url:
-      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-hotel-2.webp",
     highlight: false,
   },
   {
@@ -161,8 +225,7 @@ export const MOCK_PLACES = [
     location: "Catania, Sicily",
     rating: 4.8,
     estimated_price: 35,
-    image_url:
-      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-rest-1.webp",
     highlight: false,
   },
   {
@@ -173,8 +236,7 @@ export const MOCK_PLACES = [
     location: "Syracuse, Sicily",
     rating: 4.6,
     estimated_price: 45,
-    image_url:
-      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-rest-2.webp",
     highlight: false,
   },
   {
@@ -185,8 +247,7 @@ export const MOCK_PLACES = [
     location: "Catania Province, Sicily",
     rating: 4.9,
     estimated_price: 55,
-    image_url:
-      "https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-attr-1.webp",
     highlight: true,
     blurb: "Europe’s most active volcano — jeep tours and crater views.",
   },
@@ -198,8 +259,7 @@ export const MOCK_PLACES = [
     location: "Taormina, Sicily",
     rating: 4.8,
     estimated_price: 12,
-    image_url:
-      "https://images.unsplash.com/photo-1594398901394-4e34939a4fd0?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-attr-2.webp",
     highlight: true,
     blurb: "Ancient theatre with views of the coast and Mount Etna.",
   },
@@ -211,8 +271,7 @@ export const MOCK_PLACES = [
     location: "Agrigento, Sicily",
     rating: 4.8,
     estimated_price: 15,
-    image_url:
-      "https://images.unsplash.com/photo-1555881403-946a14068e07?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-attr-3.webp",
     highlight: true,
     blurb: "UNESCO Greek ruins stretching across golden hills.",
   },
@@ -224,8 +283,7 @@ export const MOCK_PLACES = [
     location: "Syracuse, Sicily",
     rating: 4.7,
     estimated_price: 0,
-    image_url:
-      "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-attr-4.webp",
     highlight: true,
     blurb: "Historic island old town with piazzas, markets and sea views.",
   },
@@ -237,8 +295,7 @@ export const MOCK_PLACES = [
     location: "Noto, Sicily",
     rating: 4.7,
     estimated_price: 12,
-    image_url:
-      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-cafe-1.webp",
     highlight: false,
   },
   {
@@ -249,8 +306,7 @@ export const MOCK_PLACES = [
     location: "Catania, Sicily",
     rating: 4.5,
     estimated_price: 8,
-    image_url:
-      "https://images.unsplash.com/photo-1453614512568-c4024d13c247?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-cafe-2.webp",
     highlight: false,
   },
   {
@@ -261,8 +317,7 @@ export const MOCK_PLACES = [
     location: "Taormina, Sicily",
     rating: 4.6,
     estimated_price: 0,
-    image_url:
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-beach-1.webp",
     highlight: false,
   },
   {
@@ -273,8 +328,7 @@ export const MOCK_PLACES = [
     location: "Realmonte, Sicily",
     rating: 4.8,
     estimated_price: 0,
-    image_url:
-      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-beach-2.webp",
     highlight: true,
     blurb: "White cliff staircase dropping into turquoise water.",
   },
@@ -288,8 +342,7 @@ export const MOCK_PLACES = [
     location: "Champ de Mars, Paris",
     rating: 4.7,
     estimated_price: 30,
-    image_url:
-      "https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/paris-attr-1.webp",
     highlight: true,
     blurb: "Iconic iron tower — book summit tickets early.",
   },
@@ -301,10 +354,10 @@ export const MOCK_PLACES = [
     location: "1st Arrondissement, Paris",
     rating: 4.8,
     estimated_price: 22,
-    image_url:
-      "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/paris-attr-2.webp",
     highlight: true,
     blurb: "Home of the Mona Lisa and world-class collections.",
+    ticket_url: "https://ticket.louvre.fr/en",
   },
   {
     external_id: "paris-attr-3",
@@ -314,8 +367,7 @@ export const MOCK_PLACES = [
     location: "Montmartre, Paris",
     rating: 4.7,
     estimated_price: 0,
-    image_url:
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/paris-attr-3.webp",
     highlight: true,
     blurb: "Hilltop basilica, artists’ square and city panoramas.",
   },
@@ -327,8 +379,7 @@ export const MOCK_PLACES = [
     location: "Saint-Germain, Paris",
     rating: 4.6,
     estimated_price: 55,
-    image_url:
-      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/paris-rest-1.webp",
     highlight: false,
   },
   {
@@ -339,8 +390,7 @@ export const MOCK_PLACES = [
     location: "Saint-Germain, Paris",
     rating: 4.4,
     estimated_price: 18,
-    image_url:
-      "https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/paris-cafe-1.webp",
     highlight: false,
   },
   {
@@ -351,8 +401,7 @@ export const MOCK_PLACES = [
     location: "2nd Arrondissement, Paris",
     rating: 4.6,
     estimated_price: 220,
-    image_url:
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/paris-hotel-1.webp",
     highlight: false,
   },
 
@@ -365,8 +414,7 @@ export const MOCK_PLACES = [
     location: "Eixample, Barcelona",
     rating: 4.8,
     estimated_price: 26,
-    image_url:
-      "https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/bcn-attr-1.webp",
     highlight: true,
     blurb: "Gaudí’s unfinished masterpiece — reserve timed entry.",
   },
@@ -378,8 +426,7 @@ export const MOCK_PLACES = [
     location: "Gràcia, Barcelona",
     rating: 4.6,
     estimated_price: 10,
-    image_url:
-      "https://images.unsplash.com/photo-1562883676-8c7feb83f09b?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/bcn-attr-2.webp",
     highlight: true,
     blurb: "Colorful mosaics and city views in a Gaudí park.",
   },
@@ -391,8 +438,7 @@ export const MOCK_PLACES = [
     location: "Ciutat Vella, Barcelona",
     rating: 4.7,
     estimated_price: 0,
-    image_url:
-      "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/bcn-attr-3.webp",
     highlight: true,
     blurb: "Medieval lanes, plazas and hidden courtyards.",
   },
@@ -404,8 +450,7 @@ export const MOCK_PLACES = [
     location: "Barceloneta, Barcelona",
     rating: 4.3,
     estimated_price: 0,
-    image_url:
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/bcn-beach-1.webp",
     highlight: true,
     blurb: "City beach for a swim after sightseeing.",
   },
@@ -417,8 +462,7 @@ export const MOCK_PLACES = [
     location: "Eixample, Barcelona",
     rating: 4.6,
     estimated_price: 35,
-    image_url:
-      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/bcn-rest-1.webp",
     highlight: false,
   },
   {
@@ -429,8 +473,7 @@ export const MOCK_PLACES = [
     location: "Gothic Quarter, Barcelona",
     rating: 4.5,
     estimated_price: 8,
-    image_url:
-      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/bcn-cafe-1.webp",
     highlight: false,
   },
 
@@ -443,8 +486,7 @@ export const MOCK_PLACES = [
     location: "Oia, Santorini",
     rating: 4.9,
     estimated_price: 0,
-    image_url:
-      "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/san-attr-1.webp",
     highlight: true,
     blurb: "World-famous caldera sunset over whitewashed houses.",
   },
@@ -456,8 +498,7 @@ export const MOCK_PLACES = [
     location: "Akrotiri, Santorini",
     rating: 4.6,
     estimated_price: 12,
-    image_url:
-      "https://images.unsplash.com/photo-1601581875309-fafbf2d3ed3a?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-attr-3.webp",
     highlight: true,
     blurb: "Pompeii of the Aegean — Bronze Age ruins under ash.",
   },
@@ -469,8 +510,7 @@ export const MOCK_PLACES = [
     location: "Akrotiri, Santorini",
     rating: 4.4,
     estimated_price: 0,
-    image_url:
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/san-beach-1.webp",
     highlight: true,
     blurb: "Dramatic red cliffs meeting the Aegean.",
   },
@@ -482,8 +522,7 @@ export const MOCK_PLACES = [
     location: "Amoudi Bay, Santorini",
     rating: 4.7,
     estimated_price: 45,
-    image_url:
-      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/san-rest-1.webp",
     highlight: false,
   },
   {
@@ -494,8 +533,7 @@ export const MOCK_PLACES = [
     location: "Oia, Santorini",
     rating: 4.8,
     estimated_price: 280,
-    image_url:
-      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/san-hotel-1.webp",
     highlight: false,
   },
   {
@@ -506,8 +544,7 @@ export const MOCK_PLACES = [
     location: "Fira, Santorini",
     rating: 4.5,
     estimated_price: 10,
-    image_url:
-      "https://images.unsplash.com/photo-1453614512568-c4024d13c247?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/sicily-cafe-2.webp",
     highlight: false,
   },
 
@@ -520,8 +557,7 @@ export const MOCK_PLACES = [
     location: "Centro Storico, Rome",
     rating: 4.8,
     estimated_price: 18,
-    image_url:
-      "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/rome-attr-1.webp",
     highlight: true,
     blurb: "Ancient amphitheatre — combine with Forum & Palatine.",
   },
@@ -533,8 +569,7 @@ export const MOCK_PLACES = [
     location: "Vatican City",
     rating: 4.7,
     estimated_price: 25,
-    image_url:
-      "https://images.unsplash.com/photo-1531572753322-ad063cecc140?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/rome-attr-2.webp",
     highlight: true,
     blurb: "Michelangelo’s ceiling and endless galleries.",
   },
@@ -546,8 +581,7 @@ export const MOCK_PLACES = [
     location: "Trevi, Rome",
     rating: 4.7,
     estimated_price: 0,
-    image_url:
-      "https://images.unsplash.com/photo-1525874684015-58341d594b8d?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/rome-attr-3.webp",
     highlight: true,
     blurb: "Toss a coin and soak in Baroque Rome.",
   },
@@ -559,10 +593,10 @@ export const MOCK_PLACES = [
     location: "Piazza della Rotonda, Rome",
     rating: 4.8,
     estimated_price: 5,
-    image_url:
-      "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/rome-attr-4.webp",
     highlight: true,
     blurb: "Nearly 2,000-year-old dome still open to the sky.",
+    ticket_url: "https://www.pantheonroma.com/en/",
   },
   {
     external_id: "rome-rest-1",
@@ -572,8 +606,7 @@ export const MOCK_PLACES = [
     location: "Trastevere, Rome",
     rating: 4.6,
     estimated_price: 40,
-    image_url:
-      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/rome-rest-1.webp",
     highlight: false,
   },
   {
@@ -584,8 +617,7 @@ export const MOCK_PLACES = [
     location: "Centro Storico, Rome",
     rating: 4.5,
     estimated_price: 5,
-    image_url:
-      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/rome-cafe-1.webp",
     highlight: false,
   },
 
@@ -598,8 +630,7 @@ export const MOCK_PLACES = [
     location: "Tower Hill, London",
     rating: 4.6,
     estimated_price: 35,
-    image_url:
-      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/lon-attr-1.webp",
     highlight: true,
     blurb: "Crown Jewels, Beefeaters and 1,000 years of history.",
   },
@@ -611,8 +642,7 @@ export const MOCK_PLACES = [
     location: "Bloomsbury, London",
     rating: 4.7,
     estimated_price: 0,
-    image_url:
-      "https://images.unsplash.com/photo-1529655683826-aba9b3e77383?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/lon-attr-2.webp",
     highlight: true,
     blurb: "Free world history museum — Rosetta Stone and more.",
   },
@@ -624,8 +654,7 @@ export const MOCK_PLACES = [
     location: "Westminster, London",
     rating: 4.7,
     estimated_price: 0,
-    image_url:
-      "https://images.unsplash.com/photo-1486299267070-83823f5448dd?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/lon-attr-3.webp",
     highlight: true,
     blurb: "Parliament, the Elizabeth Tower and the Thames.",
   },
@@ -637,8 +666,7 @@ export const MOCK_PLACES = [
     location: "Camden, London",
     rating: 4.5,
     estimated_price: 0,
-    image_url:
-      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/lon-attr-4.webp",
     highlight: true,
     blurb: "Street food, vintage stalls and canal walks.",
   },
@@ -650,8 +678,7 @@ export const MOCK_PLACES = [
     location: "Covent Garden, London",
     rating: 4.6,
     estimated_price: 35,
-    image_url:
-      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/lon-rest-1.webp",
     highlight: false,
   },
   {
@@ -662,8 +689,7 @@ export const MOCK_PLACES = [
     location: "Borough Market, London",
     rating: 4.6,
     estimated_price: 6,
-    image_url:
-      "https://images.unsplash.com/photo-1453614512568-c4024d13c247?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/places/lon-cafe-1.webp",
     highlight: false,
   },
   {
@@ -674,8 +700,256 @@ export const MOCK_PLACES = [
     location: "Shoreditch, London",
     rating: 4.5,
     estimated_price: 190,
-    image_url:
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+    image_url: "/images/destinations/london.webp",
+    highlight: false,
+  },
+
+  // —— Pristina ——
+  {
+    external_id: "pri-attr-1",
+    destination: "Pristina",
+    name: "Newborn Monument",
+    category: "Attractions",
+    location: "City Center, Pristina",
+    rating: 4.6,
+    estimated_price: 0,
+    image_url: "/images/default-trip.webp",
+    highlight: true,
+    blurb: "Iconic lettering unveiled at Kosovo's 2008 independence, repainted each year.",
+  },
+  {
+    external_id: "pri-attr-2",
+    destination: "Pristina",
+    name: "Gërmia Park",
+    category: "Attractions",
+    location: "Gërmia, Pristina",
+    rating: 4.7,
+    estimated_price: 0,
+    image_url: "/images/default-trip.webp",
+    highlight: true,
+    blurb: "Pristina's green escape with forest trails, pools and hilltop views.",
+  },
+  {
+    external_id: "pri-attr-3",
+    destination: "Pristina",
+    name: "Kosovo Museum",
+    category: "Attractions",
+    location: "City Center, Pristina",
+    rating: 4.3,
+    estimated_price: 2,
+    image_url: "/images/default-trip.webp",
+    highlight: true,
+    blurb: "Archaeology and history exhibits, including Neolithic artifacts.",
+  },
+  {
+    external_id: "pri-attr-4",
+    destination: "Pristina",
+    name: "Mother Teresa Cathedral",
+    category: "Attractions",
+    location: "City Center, Pristina",
+    rating: 4.5,
+    estimated_price: 0,
+    image_url: "/images/default-trip.webp",
+    highlight: true,
+    blurb: "Modern cathedral with a rooftop terrace overlooking the city.",
+  },
+  {
+    external_id: "pri-hotel-1",
+    destination: "Pristina",
+    name: "Swiss Diamond Hotel Pristina",
+    category: "Hotels",
+    location: "City Center, Pristina",
+    rating: 4.6,
+    estimated_price: 110,
+    image_url: "/images/default-trip.webp",
+    highlight: false,
+  },
+  {
+    external_id: "pri-rest-1",
+    destination: "Pristina",
+    name: "Tiffany Restaurant",
+    category: "Restaurants",
+    location: "City Center, Pristina",
+    rating: 4.4,
+    estimated_price: 20,
+    image_url: "/images/default-trip.webp",
+    highlight: false,
+  },
+  {
+    external_id: "pri-cafe-1",
+    destination: "Pristina",
+    name: "Soma Book Station",
+    category: "Cafés",
+    location: "City Center, Pristina",
+    rating: 4.5,
+    estimated_price: 5,
+    image_url: "/images/default-trip.webp",
+    highlight: false,
+  },
+
+  // —— Skopje ——
+  {
+    external_id: "sko-attr-1",
+    destination: "Skopje",
+    name: "Skopje Old Bazaar",
+    category: "Attractions",
+    location: "Čaršija, Skopje",
+    rating: 4.6,
+    estimated_price: 0,
+    image_url: "/images/default-trip.webp",
+    highlight: true,
+    blurb: "One of the Balkans' largest bazaars, lined with mosques and craft shops.",
+  },
+  {
+    external_id: "sko-attr-2",
+    destination: "Skopje",
+    name: "Stone Bridge & Macedonia Square",
+    category: "Attractions",
+    location: "City Center, Skopje",
+    rating: 4.5,
+    estimated_price: 0,
+    image_url: "/images/default-trip.webp",
+    highlight: true,
+    blurb: "Ottoman-era bridge leading to the city's grand statue-lined square.",
+  },
+  {
+    external_id: "sko-attr-3",
+    destination: "Skopje",
+    name: "Matka Canyon",
+    category: "Attractions",
+    location: "Matka, Skopje",
+    rating: 4.8,
+    estimated_price: 8,
+    image_url: "/images/default-trip.webp",
+    highlight: true,
+    blurb: "Boat rides past cliffside monasteries and caves just outside the city.",
+  },
+  {
+    external_id: "sko-attr-4",
+    destination: "Skopje",
+    name: "Kale Fortress",
+    category: "Attractions",
+    location: "Old Town, Skopje",
+    rating: 4.4,
+    estimated_price: 0,
+    image_url: "/images/default-trip.webp",
+    highlight: true,
+    blurb: "Hilltop fortress with panoramic views over the Vardar River.",
+  },
+  {
+    external_id: "sko-hotel-1",
+    destination: "Skopje",
+    name: "Marriott Skopje",
+    category: "Hotels",
+    location: "City Center, Skopje",
+    rating: 4.6,
+    estimated_price: 120,
+    image_url: "/images/default-trip.webp",
+    highlight: false,
+  },
+  {
+    external_id: "sko-rest-1",
+    destination: "Skopje",
+    name: "Kebapi Destan",
+    category: "Restaurants",
+    location: "Old Bazaar, Skopje",
+    rating: 4.6,
+    estimated_price: 8,
+    image_url: "/images/default-trip.webp",
+    highlight: false,
+  },
+  {
+    external_id: "sko-cafe-1",
+    destination: "Skopje",
+    name: "Old Bazaar Café",
+    category: "Cafés",
+    location: "Čaršija, Skopje",
+    rating: 4.3,
+    estimated_price: 4,
+    image_url: "/images/default-trip.webp",
+    highlight: false,
+  },
+
+  // —— Tirana ——
+  {
+    external_id: "tir-attr-1",
+    destination: "Tirana",
+    name: "Skanderbeg Square",
+    category: "Attractions",
+    location: "City Center, Tirana",
+    rating: 4.6,
+    estimated_price: 0,
+    image_url: "/images/default-trip.webp",
+    highlight: true,
+    blurb: "Tirana's vast central square, named after Albania's national hero.",
+  },
+  {
+    external_id: "tir-attr-2",
+    destination: "Tirana",
+    name: "Bunk'Art",
+    category: "Attractions",
+    location: "Outskirts, Tirana",
+    rating: 4.7,
+    estimated_price: 5,
+    image_url: "/images/default-trip.webp",
+    highlight: true,
+    blurb: "Cold War bunker turned museum on communist-era history and art.",
+  },
+  {
+    external_id: "tir-attr-3",
+    destination: "Tirana",
+    name: "Dajti Ekspres Cable Car",
+    category: "Attractions",
+    location: "Mount Dajti, Tirana",
+    rating: 4.6,
+    estimated_price: 12,
+    image_url: "/images/default-trip.webp",
+    highlight: true,
+    blurb: "Cable car up Mount Dajti for sweeping views over Tirana.",
+  },
+  {
+    external_id: "tir-attr-4",
+    destination: "Tirana",
+    name: "Et'hem Bey Mosque",
+    category: "Attractions",
+    location: "Skanderbeg Square, Tirana",
+    rating: 4.7,
+    estimated_price: 0,
+    image_url: "/images/default-trip.webp",
+    highlight: true,
+    blurb: "18th-century mosque with delicate frescoes in the city center.",
+  },
+  {
+    external_id: "tir-hotel-1",
+    destination: "Tirana",
+    name: "Xheko Imperial Hotel",
+    category: "Hotels",
+    location: "City Center, Tirana",
+    rating: 4.5,
+    estimated_price: 90,
+    image_url: "/images/default-trip.webp",
+    highlight: false,
+  },
+  {
+    external_id: "tir-rest-1",
+    destination: "Tirana",
+    name: "Oda Restaurant",
+    category: "Restaurants",
+    location: "Old Town, Tirana",
+    rating: 4.6,
+    estimated_price: 15,
+    image_url: "/images/default-trip.webp",
+    highlight: false,
+  },
+  {
+    external_id: "tir-cafe-1",
+    destination: "Tirana",
+    name: "Komiteti Kafe Muzeum",
+    category: "Cafés",
+    location: "City Center, Tirana",
+    rating: 4.5,
+    estimated_price: 4,
+    image_url: "/images/default-trip.webp",
     highlight: false,
   },
 ];
@@ -686,7 +960,7 @@ export function buildSicilyDemo(store, uid) {
 
   store.users.push({
     id: userId,
-    email: "demo@wanderplan.app",
+    email: "demo@movin.app",
     password: "demo123",
     full_name: "Alex Traveler",
     created_at: new Date().toISOString(),
@@ -702,8 +976,7 @@ export function buildSicilyDemo(store, uid) {
     budget: 900,
     currency: "EUR",
     travelers: 2,
-    image_url:
-      "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=1200&q=80",
+    image_url: "/images/destinations/sicily.webp",
     created_at: new Date().toISOString(),
   });
 

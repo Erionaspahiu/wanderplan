@@ -1,18 +1,21 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ImageOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { createTrip } from "../services/tripService";
 import { CURRENCIES } from "../data/demoData";
+import { DEFAULT_TRIP_IMAGE, resolveDestinationPhoto } from "../utils/tripPhoto";
 import { validateTrip } from "../utils/validation";
 import { todayISO } from "../utils/dates";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 
-const DEFAULT_IMAGE =
-  "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=80";
+const DEFAULT_IMAGE = DEFAULT_TRIP_IMAGE;
 
 export default function CreateTrip() {
   const { user, showToast } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     destination: "",
@@ -26,6 +29,28 @@ export default function CreateTrip() {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState({ url: null, source: null, loading: false });
+  const previewRequestId = useRef(0);
+
+  useEffect(() => {
+    const destination = form.destination.trim();
+    const country = form.country.trim();
+    if (!destination) {
+      setPreview({ url: null, source: null, loading: false });
+      return undefined;
+    }
+
+    const requestId = ++previewRequestId.current;
+    setPreview((p) => ({ ...p, loading: true }));
+    const timer = setTimeout(async () => {
+      const result = await resolveDestinationPhoto(destination, country);
+      if (previewRequestId.current === requestId) {
+        setPreview({ url: result?.url || null, source: result?.source || null, loading: false });
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [form.destination, form.country]);
 
   const onChange = (e) => {
     const { name, value } = e.target;
@@ -40,6 +65,11 @@ export default function CreateTrip() {
 
     setLoading(true);
     try {
+      let image_url = form.image_url.trim();
+      if (!image_url) {
+        const resolved = await resolveDestinationPhoto(form.destination.trim(), form.country.trim());
+        image_url = resolved?.url || DEFAULT_IMAGE;
+      }
       const trip = await createTrip(user.id, {
         destination: form.destination.trim(),
         country: form.country.trim(),
@@ -48,12 +78,12 @@ export default function CreateTrip() {
         budget: Number(form.budget),
         currency: form.currency,
         travelers: Number(form.travelers),
-        image_url: form.image_url.trim() || DEFAULT_IMAGE,
+        image_url,
       });
-      showToast("Trip created!");
+      showToast(t("createTrip.createdToast"));
       navigate(`/trips/${trip.id}`);
     } catch (err) {
-      showToast(err.message || "Could not create trip", "error");
+      showToast(err.message || t("createTrip.createFailed"), "error");
     } finally {
       setLoading(false);
     }
@@ -63,8 +93,8 @@ export default function CreateTrip() {
     <div className="container page narrow">
       <header className="page-header">
         <div>
-          <h1>Create a new trip</h1>
-          <p>Tell us where you’re going and we’ll set up your dashboard.</p>
+          <h1>{t("createTrip.title")}</h1>
+          <p>{t("createTrip.subtitle")}</p>
         </div>
       </header>
 
@@ -73,40 +103,40 @@ export default function CreateTrip() {
           <Input
             id="destination"
             name="destination"
-            label="Destination"
+            label={t("createTrip.destination")}
             placeholder="Sicily"
             value={form.destination}
             onChange={onChange}
-            error={errors.destination}
+            error={errors.destination && t(errors.destination)}
           />
           <Input
             id="country"
             name="country"
-            label="Country"
+            label={t("createTrip.country")}
             placeholder="Italy"
             value={form.country}
             onChange={onChange}
-            error={errors.country}
+            error={errors.country && t(errors.country)}
           />
           <Input
             id="start_date"
             name="start_date"
             type="date"
-            label="Start date"
+            label={t("createTrip.startDate")}
             min={todayISO()}
             value={form.start_date}
             onChange={onChange}
-            error={errors.start_date}
+            error={errors.start_date && t(errors.start_date)}
           />
           <Input
             id="end_date"
             name="end_date"
             type="date"
-            label="End date"
+            label={t("createTrip.endDate")}
             min={form.start_date || todayISO()}
             value={form.end_date}
             onChange={onChange}
-            error={errors.end_date}
+            error={errors.end_date && t(errors.end_date)}
           />
           <Input
             id="budget"
@@ -114,20 +144,20 @@ export default function CreateTrip() {
             type="number"
             min="0"
             step="1"
-            label="Budget"
+            label={t("createTrip.budget")}
             placeholder="900"
             value={form.budget}
             onChange={onChange}
-            error={errors.budget}
+            error={errors.budget && t(errors.budget)}
           />
           <Input
             id="currency"
             name="currency"
             as="select"
-            label="Currency"
+            label={t("createTrip.currency")}
             value={form.currency}
             onChange={onChange}
-            error={errors.currency}
+            error={errors.currency && t(errors.currency)}
           >
             {CURRENCIES.map((c) => (
               <option key={c} value={c}>
@@ -140,27 +170,50 @@ export default function CreateTrip() {
             name="travelers"
             type="number"
             min="1"
-            label="Travelers"
+            label={t("createTrip.travelers")}
             value={form.travelers}
             onChange={onChange}
-            error={errors.travelers}
+            error={errors.travelers && t(errors.travelers)}
           />
           <Input
             id="image_url"
             name="image_url"
-            label="Trip image URL (optional)"
+            label={t("createTrip.imageUrl")}
             placeholder="https://..."
             value={form.image_url}
             onChange={onChange}
-            hint="Leave blank to use a default travel photo"
+            hint={t("createTrip.imageHint")}
           />
         </div>
+
+        {!form.image_url.trim() && form.destination.trim() && (
+          <div className="photo-preview">
+            {preview.loading ? (
+              <div className="photo-preview-placeholder">
+                <span className="spinner-sm" /> {t("createTrip.findingPhoto", { destination: form.destination })}
+              </div>
+            ) : preview.url ? (
+              <>
+                <img src={preview.url} alt={`${form.destination}, ${form.country}`} loading="lazy" />
+                <p className="muted">
+                  {preview.source === "curated"
+                    ? t("createTrip.curatedPhoto")
+                    : t("createTrip.wikipediaPhoto")}
+                </p>
+              </>
+            ) : (
+              <div className="photo-preview-placeholder">
+                <ImageOff size={18} /> {t("createTrip.noPhotoFound")}
+              </div>
+            )}
+          </div>
+        )}
         <div className="form-actions">
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" loading={loading}>
-            Create Trip
+            {t("createTrip.submit")}
           </Button>
         </div>
       </form>

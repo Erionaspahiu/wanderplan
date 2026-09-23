@@ -3,23 +3,23 @@ import { CalendarDays, Users } from "lucide-react";
 import { formatDateRange, daysBetween } from "../../utils/dates";
 import { formatMoney, budgetProgress } from "../../utils/currency";
 import { countryFlag } from "../../utils/validation";
+import { useLanguage } from "../../context/LanguageContext";
 import Button from "../ui/Button";
 
 export default function TripCard({ trip, spent = 0 }) {
+  const { t } = useLanguage();
   const progress = budgetProgress(spent, trip.budget);
   const days = daysBetween(trip.start_date, trip.end_date);
 
   return (
     <article className="trip-card">
-      <div
-        className="trip-card-media"
-        style={{
-          backgroundImage: `url(${
-            trip.image_url ||
-            "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80"
-          })`,
-        }}
-      >
+      <div className="trip-card-media">
+        <img
+          src={trip.image_url || "/images/default-trip.webp"}
+          alt={`${trip.destination}, ${trip.country}`}
+          loading="lazy"
+          decoding="async"
+        />
         <span className="trip-card-flag">{countryFlag(trip.country)}</span>
       </div>
       <div className="trip-card-body">
@@ -30,7 +30,8 @@ export default function TripCard({ trip, spent = 0 }) {
           <CalendarDays size={14} /> {formatDateRange(trip.start_date, trip.end_date)}
         </p>
         <p className="trip-meta">
-          <Users size={14} /> {trip.travelers} traveler{trip.travelers > 1 ? "s" : ""} · {days} days
+          <Users size={14} /> {trip.travelers} {trip.travelers > 1 ? t("tripCard.travelers") : t("tripCard.traveler")}{" "}
+          · {days} {t("tripCard.days")}
         </p>
         <div className="budget-mini">
           <div className="budget-mini-row">
@@ -45,7 +46,7 @@ export default function TripCard({ trip, spent = 0 }) {
         </div>
         <Link to={`/trips/${trip.id}`}>
           <Button variant="secondary" className="w-full">
-            View Trip
+            {t("tripCard.viewTrip")}
           </Button>
         </Link>
       </div>
